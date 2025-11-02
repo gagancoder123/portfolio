@@ -103,6 +103,24 @@ function scrollActive() {
 }
 window.addEventListener("scroll", scrollActive)
 
+/* Ensure anchor targets appear below fixed header: set scroll-margin-top dynamically */
+function adjustSectionScrollMargin() {
+  try {
+    const header = document.getElementById('header')
+    const headerHeight = header ? header.offsetHeight : 80
+    document.querySelectorAll('section[id]').forEach((sec) => {
+      // add a small extra offset (10px) so content isn't flush to the header
+      sec.style.scrollMarginTop = (headerHeight + 10) + 'px'
+    })
+  } catch (e) {
+    console.warn('adjustSectionScrollMargin failed', e)
+  }
+}
+
+// Run on load and when window resizes (header height may change on mobile toggles)
+window.addEventListener('load', adjustSectionScrollMargin)
+window.addEventListener('resize', adjustSectionScrollMargin)
+
 /* Background header */
 function scrollHeader() {
   const nav = document.getElementById("header")
@@ -148,20 +166,83 @@ themeButton.addEventListener("click", () => {
 })
 
 /* Mail integration */
+// Optional: set this to your deployed Google Apps Script Web App URL to send via your Gmail
+// If empty, the code will use EmailJS (if configured) as a fallback.
+const GOOGLE_APPS_SCRIPT_URL = "" // e.g. https://script.google.com/macros/s/XXXX/exec
+
 document.addEventListener("DOMContentLoaded", function() {
-  emailjs.init("A9PZASRNY-NxAYHQX")
+  // Initialize EmailJS (keeps existing EmailJS behavior as a fallback)
+  try {
+    if (typeof emailjs !== 'undefined') emailjs.init("A9PZASRNY-NxAYHQX")
+  } catch (e) {
+    console.warn('EmailJS init failed or not loaded', e)
+  }
+
+  const form = document.getElementById('contact-form')
+  if (!form) return
+
+  form.addEventListener('submit', function(event) {
+    event.preventDefault()
+
+    const payload = {
+      from_name: form.querySelector('[name=from_name]')?.value || '',
+      reply_to: form.querySelector('[name=reply_to]')?.value || '',
+      subject: form.querySelector('[name=subject]')?.value || '',
+      message: form.querySelector('[name=message]')?.value || ''
+    }
+
+    // Helper to fallback to mailto (opens user's mail client) if all else fails
+    const mailtoFallback = () => {
+      const to = 'your-email@gmail.com' // <- replace with your Gmail if you want fallback prefill
+      const subject = encodeURIComponent(payload.subject)
+      const body = encodeURIComponent(`From: ${payload.from_name} <${payload.reply_to}>\n\n${payload.message}`)
+      window.open(`https://mail.google.com/mail/?view=cm&fs=1&to=${to}&su=${subject}&body=${body}`, '_blank')
+    }
+
+    // If a Google Apps Script URL is provided, try POSTing there first
+    if (GOOGLE_APPS_SCRIPT_URL) {
+      fetch(GOOGLE_APPS_SCRIPT_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      })
+        .then((res) => {
+          if (!res.ok) throw new Error('Network response was not ok')
+          return res.json()
+        })
+        .then((data) => {
+          console.log('GAS send success', data)
+          alert('Message sent! Thank you.')
+          form.reset()
+        })
+        .catch((err) => {
+          console.error('GAS send failed, falling back to EmailJS', err)
+          // fallback to EmailJS if available
+          sendViaEmailJS(payload, form) || mailtoFallback()
+        })
+    } else {
+      // No GAS endpoint — use EmailJS directly as before
+      sendViaEmailJS(payload, form, mailtoFallback)
+    }
+  })
 })
 
-document.getElementById('contact-form').addEventListener('submit', function(event) {
-  event.preventDefault()
+function sendViaEmailJS(payload, form, finalFallback) {
+  if (typeof emailjs === 'undefined') {
+    console.warn('EmailJS not available')
+    if (finalFallback) finalFallback()
+    return
+  }
 
-  emailjs.sendForm('service_btvk1js', 'template_zhvgvnk', this)
+  emailjs.send('service_btvk1js', 'template_zhvgvnk', payload)
     .then(function(response) {
-      console.log('Success!', response.status, response.text)
+      console.log('EmailJS Success!', response.status, response.text)
       alert('Email sent successfully!')
-      document.getElementById('contact-form').reset()
+      if (form) form.reset()
     }, function(error) {
-      console.log('Failed...', error)
-      alert('Email sending failed.')
+      console.error('EmailJS Failed...', error)
+      alert('Email sending failed — opening mail client as fallback.')
+      if (finalFallback) finalFallback()
     })
-})
+}
+

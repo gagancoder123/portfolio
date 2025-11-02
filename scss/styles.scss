@@ -655,7 +655,7 @@ img {
 
 /* Footer */
 .footer {
-    padding-top: 2rem;
+    padding-top: 3rem;
 
     &-bg {
         background-color: var(--first-color-second);
@@ -952,22 +952,81 @@ img {
         }
     }
 
-    .about-container {
-        column-gap: 5rem;
+   /* ===== About Section ===== */
+.about {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;         /* Full screen height */
+  text-align: center;
+  padding: 0 20px;
+  background-color: #ffffff; /* Optional: clean background */
+}
 
-        &-imgAlt {
-            width: 350px;
-            height: 250px;
-        }
+/* Title */
+.section-title {
+  font-size: 2.2rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
 
-        &-data-description {
-            text-align: initial;
-        }
+/* Subtitle */
+.section-subtitle {
+  color: #666;
+  font-size: 1rem;
+  margin-bottom: 1.5rem;
+}
 
-        &-data-info {
-            justify-content: space-between;
-        }
-    }
+/* Content container */
+.about-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Content box */
+.about-content {
+  max-width: 600px;
+}
+
+/* Paragraph styling */
+.about-description {
+  font-size: 1.1rem;
+  color: #555;
+  line-height: 1.8;
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+  margin-left: 1rem;
+  margin-right: 1rem;  /* Adds “…” if text overflows */
+}
+
+/* Button container */
+.about-buttons {
+  text-align: center;
+  margin-top: 1.5rem;
+}
+
+/* Download button */
+.button {
+  background-color: #a9c7c4;
+  color: white;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: background 0.3s ease;
+  font-weight: 500;
+}
+
+/* Hover effect */
+.button:hover {
+  background-color: #8db4b1;
+}
+
+
 
     .skills-container {
         grid-template-columns: 1fr 1fr;
@@ -1063,3 +1122,5 @@ img {
         } 
     }
 }
+
+
